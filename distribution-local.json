@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "rss": "https://github.com/BryanDrouet/microvision-modpack",
+  "servers": [
+    {
+      "id": "MicroVision-1.20.1",
+      "name": "MicroVision (Minecraft 1.20.1)",
+      "description": "MicroVision Modpack - Minecraft 1.20.1 with Forge",
+      "icon": "https://raw.githubusercontent.com/BryanDrouet/microvision-modpack/main/modpack-logo.png",
+      "version": "1.0.0",
+      "address": "microvision.bryan.ovh",
+      "minecraftVersion": "1.20.1",
+      "mainServer": true,
+      "autoconnect": false,
+      "modules": []
+    }
+  ]
+}

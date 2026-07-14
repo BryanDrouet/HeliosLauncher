@@ -60,18 +60,33 @@ function onDistroLoad(data){
 }
 
 // Ensure Distribution is downloaded and cached.
+// For development, load local distribution file directly
 DistroAPI.getDistribution()
     .then(heliosDistro => {
-        logger.info('Loaded distribution index.')
-
+        logger.info('Loaded distribution index from remote or cache.')
         onDistroLoad(heliosDistro)
     })
     .catch(err => {
-        logger.info('Failed to load an older version of the distribution index.')
-        logger.info('Application cannot run.')
-        logger.error(err)
-
-        onDistroLoad(null)
+        logger.warn('Failed to load distribution from remote/cache, trying local fallback...')
+        logger.debug('Error:', err.message)
+        
+        // Try to load local distribution file directly
+        try {
+            const localDistroPath = path.join(__dirname, '../../..', 'HeliosLauncher', 'distribution-local.json')
+            if (!fs.existsSync(localDistroPath)) {
+                throw new Error(`File not found: ${localDistroPath}`)
+            }
+            
+            const localDistroContent = fs.readFileSync(localDistroPath, 'utf8')
+            const localDistro = JSON.parse(localDistroContent)
+            logger.info('Successfully loaded local distribution fallback')
+            onDistroLoad(localDistro)
+        } catch (fallbackErr) {
+            logger.error('Failed to load local fallback distribution:', fallbackErr)
+            logger.warn('Application will start but may not function correctly')
+            // Still continue with null to allow some functionality
+            onDistroLoad(null)
+        }
     })
 
 // Clean up temp dir incase previous launches ended unexpectedly. 
