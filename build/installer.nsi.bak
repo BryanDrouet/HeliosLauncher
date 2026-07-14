@@ -7,11 +7,11 @@
 !include "nsDialogs.nsh"
 !include "LogicLib.nsh"
 
-; Product Info
-!define PRODUCT_NAME "MicroVision Launcher"
-!define PRODUCT_VERSION "${VERSION}"
-!define PRODUCT_PUBLISHER "MicroVision"
-!define PRODUCT_WEB_SITE "https://microvision.modpack"
+; Product Info - These are provided by electron-builder, don't redefine them
+; !define PRODUCT_NAME "MicroVision Launcher"
+; !define PRODUCT_VERSION "${VERSION}"
+; !define PRODUCT_PUBLISHER "MicroVision"
+; !define PRODUCT_WEB_SITE "https://microvision.modpack"
 !define REG_KEY "Software\MicroVision\Launcher"
 
 ; Installer variables

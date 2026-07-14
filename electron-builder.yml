@@ -30,14 +30,11 @@ win:
 # Windows Installer Configuration
 nsis:
   oneClick: false
-  perMachine: false
   allowElevation: true
   allowToChangeInstallationDirectory: true
-  shortcutName: 'MicroVision Launcher'
   createDesktopShortcut: true
   createStartMenuShortcut: true
   runAfterFinish: true
-  uninstallDisplayName: 'MicroVision Launcher'
 
 # macOS Configuration
 mac:
