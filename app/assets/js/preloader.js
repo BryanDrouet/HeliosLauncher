@@ -2,98 +2,41 @@ const {ipcRenderer}  = require('electron')
 const fs             = require('fs-extra')
 const os             = require('os')
 const path           = require('path')
-const { execSync }   = require('child_process')
 
-const ConfigManager  = require('./configmanager')
-const { DistroAPI }  = require('./distromanager')
-const LangLoader     = require('./langloader')
-const { LoggerUtil } = require('helios-core')
-// eslint-disable-next-line no-unused-vars
-const { HeliosDistribution } = require('helios-core/common')
-
-const logger = LoggerUtil.getLogger('Preloader')
-
-logger.info('Loading..')
-
-// Load ConfigManager
-ConfigManager.load()
-
-// Check if this is the first launch and try to get language from installer
-if (ConfigManager.isFirstLaunch()) {
+// Setup debug logging to file
+const logFile = path.join(os.homedir(), 'MicroVision_preloader.log')
+const writeLog = (msg) => {
     try {
-        const regKey = 'HKCU\\Software\\MicroVision\\Launcher'
-        const result = execSync(`reg query "${regKey}" /v InstallLanguage`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] })
-        const match = result.match(/InstallLanguage\s+REG_SZ\s+(\S+)/)
-        if (match && match[1]) {
-            ConfigManager.setLanguage(match[1])
-            ConfigManager.save()
-            logger.info(`Set language from installer: ${match[1]}`)
-        }
+        fs.appendFileSync(logFile, `[${new Date().toISOString()}] ${msg}\n`)
     } catch (e) {
-        logger.info('Could not read installer language from registry:', e.message)
+        // Silently ignore log errors
     }
 }
 
-// Yuck!
-// TODO Fix this
-DistroAPI['commonDir'] = ConfigManager.getCommonDirectory()
-DistroAPI['instanceDir'] = ConfigManager.getInstanceDirectory()
+writeLog('=== PRELOADER STARTING ===')
+writeLog('__dirname: ' + __dirname)
 
-// Load Strings
-LangLoader.setupLanguage()
+writeLog('Initializing IPC listeners...')
 
-/**
- * 
- * @param {HeliosDistribution} data 
- */
-function onDistroLoad(data){
-    if(data != null){
-        
-        // Resolve the selected server if its value has yet to be set.
-        if(ConfigManager.getSelectedServer() == null || data.getServerById(ConfigManager.getSelectedServer()) == null){
-            logger.info('Determining default selected server..')
-            ConfigManager.setSelectedServer(data.getMainServer().rawServer.id)
-            ConfigManager.save()
-        }
-    }
-    ipcRenderer.send('distributionIndexDone', data != null)
-}
-
-// Ensure Distribution is downloaded and cached.
-// For development, load local distribution file directly
-DistroAPI.getDistribution()
-    .then(heliosDistro => {
-        logger.info('Loaded distribution index from remote or cache.')
-        onDistroLoad(heliosDistro)
-    })
-    .catch(err => {
-        logger.warn('Failed to load distribution from remote/cache, trying local fallback...')
-        logger.debug('Error:', err.message)
-        
-        // Try to load local distribution file directly
-        try {
-            const localDistroPath = path.join(__dirname, '../../..', 'HeliosLauncher', 'distribution-local.json')
-            if (!fs.existsSync(localDistroPath)) {
-                throw new Error(`File not found: ${localDistroPath}`)
-            }
-            
-            const localDistroContent = fs.readFileSync(localDistroPath, 'utf8')
-            const localDistro = JSON.parse(localDistroContent)
-            logger.info('Successfully loaded local distribution fallback')
-            onDistroLoad(localDistro)
-        } catch (fallbackErr) {
-            logger.error('Failed to load local fallback distribution:', fallbackErr)
-            logger.warn('Application will start but may not function correctly')
-            // Still continue with null to allow some functionality
-            onDistroLoad(null)
-        }
-    })
-
-// Clean up temp dir incase previous launches ended unexpectedly. 
-fs.remove(path.join(os.tmpdir(), ConfigManager.getTempNativeFolder()), (err) => {
-    if(err){
-        logger.warn('Error while cleaning natives directory', err)
-    } else {
-        logger.info('Cleaned natives directory.')
-    }
+// Simple IPC listeners that don't require ConfigManager
+ipcRenderer.on('setLanguage', (event, language) => {
+    writeLog(`Received language change event: ${language}`)
+    // Store language preference in renderer-accessible way
+    window.launchanguage = language
 })
+
+writeLog('IPC listeners initialized')
+writeLog('Requesting distribution from main process...')
+
+// Request the distribution from the main process
+ipcRenderer.invoke('get-distribution-data').then((data) => {
+    writeLog('Received distribution data')
+    // Store for later use in uibinder or other scripts
+    window.distributionData = data
+    ipcRenderer.send('distributionIndexDone', true)
+}).catch((err) => {
+    writeLog('Error getting distribution: ' + err)
+    ipcRenderer.send('distributionIndexDone', false)
+})
+
+writeLog('=== PRELOADER COMPLETE ===')

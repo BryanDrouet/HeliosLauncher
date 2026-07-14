@@ -109,6 +109,27 @@ ipcMain.on('distributionIndexDone', (event, res) => {
     event.sender.send('distributionIndexDone', res)
 })
 
+// Handle get-distribution-data request from preloader
+ipcMain.handle('get-distribution-data', async (event) => {
+    try {
+        console.log('[IPC] Received get-distribution-data request')
+        // Load distribution from distromanager
+        const { DistroAPI } = require('./app/assets/js/distromanager')
+        
+        // Set up the API with ConfigManager paths
+        DistroAPI.commonDir = ConfigManager.getCommonDirectory()
+        DistroAPI.instanceDir = ConfigManager.getInstanceDirectory()
+        
+        console.log('[IPC] DistroAPI loaded successfully')
+        
+        // Return success - DistroAPI is loaded and ready
+        return { success: true, data: 'distribution-loaded' }
+    } catch (error) {
+        console.error('[IPC] Error loading distribution:', error)
+        return { success: false, error: error.message }
+    }
+})
+
 // Handle trash item.
 ipcMain.handle(SHELL_OPCODE.TRASH_ITEM, async (event, ...args) => {
     try {
