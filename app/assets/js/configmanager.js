@@ -801,6 +801,7 @@ exports.setAllowPrerelease = function(allowPrerelease){
  * @returns {string} The language code (e.g., 'en_US', 'fr_FR', 'es_ES').
  */
 exports.getLanguage = function(def = false){
+    if(!config) return DEFAULT_CONFIG.settings.launcher.language
     return !def ? config.settings.launcher.language : DEFAULT_CONFIG.settings.launcher.language
 }
 

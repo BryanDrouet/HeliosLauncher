@@ -14,8 +14,11 @@ const { AZURE_CLIENT_ID, MSFT_OPCODE, MSFT_REPLY_TYPE, MSFT_ERROR, SHELL_OPCODE 
 const LangLoader                        = require('./app/assets/js/langloader')
 const ConfigManager                     = require('./app/assets/js/configmanager')
 
+// Load configuration FIRST before accessing any settings
+ConfigManager.load()
+
 // Setup Lang - load configured language
-const configuredLang = ConfigManager.getLanguage && ConfigManager.getLanguage() || null
+const configuredLang = ConfigManager.getLanguage() || 'en_US'
 LangLoader.setupLanguage(configuredLang)
 
 // Setup auto updater.
