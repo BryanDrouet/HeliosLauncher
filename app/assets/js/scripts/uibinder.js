@@ -2,16 +2,44 @@
  * Initialize UI functions which depend on internal modules.
  * Loaded after core UI functions are initialized in uicore.js.
  */
-// Requirements
-const path          = require('path')
-const { Type }      = require('helios-distribution-types')
 
-const AuthManager   = require('./assets/js/authmanager')
-const ConfigManager = require('./assets/js/configmanager')
-const { DistroAPI } = require('./assets/js/distromanager')
+console.log('[UIBINDER] Script loading...')
+
+// Try to load modules but don't fail if they can't load in renderer context
+let AuthManager
+let ConfigManager
+let DistroAPI
+
+try {
+    // Don't redeclare ipcRenderer - it should come from uicore or be globally available
+    if(typeof ipcRenderer === 'undefined') {
+        const { ipcRenderer: ipcrend } = require('electron')
+        window.ipcRenderer = ipcrend
+    }
+    
+    const path          = require('path')
+    console.log('[UIBINDER] path loaded')
+    
+    const { Type }      = require('helios-distribution-types')
+    console.log('[UIBINDER] helios-distribution-types loaded')
+    
+    AuthManager   = require('../authmanager')
+    console.log('[UIBINDER] AuthManager loaded')
+    
+    ConfigManager = require('../configmanager')
+    console.log('[UIBINDER] ConfigManager loaded')
+    
+    const distromanager = require('../distromanager')
+    DistroAPI = distromanager.DistroAPI
+    console.log('[UIBINDER] DistroAPI loaded')
+} catch (err) {
+    console.error('[UIBINDER] Error loading modules in renderer:', err.message)
+    console.log('[UIBINDER] Will request modules from main process via IPC')
+}
 
 let rscShouldLoad = false
 let fatalStartupError = false
+console.log('[UIBINDER] Module initialization complete')
 
 // Mapping of each view to their container IDs.
 const VIEWS = {
@@ -446,16 +474,44 @@ document.addEventListener('readystatechange', async () => {
 
 // Actions that must be performed after the distribution index is downloaded.
 ipcRenderer.on('distributionIndexDone', async (event, res) => {
+    console.log('[UIBINDER] Received distributionIndexDone event:', res)
     if(res) {
-        const data = await DistroAPI.getDistribution()
-        syncModConfigurations(data)
-        ensureJavaSettings(data)
-        if(document.readyState === 'interactive' || document.readyState === 'complete'){
-            await showMainUI(data)
-        } else {
-            rscShouldLoad = true
+        try {
+            let data
+            if (DistroAPI) {
+                console.log('[UIBINDER] Using local DistroAPI')
+                console.log('[UIBINDER] About to call DistroAPI.getDistribution()...')
+                data = await DistroAPI.getDistribution()
+                console.log('[UIBINDER] DistroAPI.getDistribution() returned')
+            } else {
+                console.log('[UIBINDER] DistroAPI not available in renderer, requesting from main...')
+                data = await ipcRenderer.invoke('get-distro-data')
+                console.log('[UIBINDER] Received distro data from main process')
+            }
+            
+            if (ConfigManager) {
+                syncModConfigurations(data)
+                ensureJavaSettings(data)
+            } else {
+                console.log('[UIBINDER] ConfigManager not available, skipping sync/java settings')
+            }
+            
+            if(document.readyState === 'interactive' || document.readyState === 'complete'){
+                console.log('[UIBINDER] Document ready, showing main UI')
+                await showMainUI(data)
+            } else {
+                console.log('[UIBINDER] Document not ready, setting rscShouldLoad')
+                rscShouldLoad = true
+            }
+        } catch(err) {
+            console.error('[UIBINDER] Error in distributionIndexDone:', err)
+            fatalStartupError = true
+            if(document.readyState === 'interactive' || document.readyState === 'complete'){
+                showFatalStartupError()
+            }
         }
     } else {
+        console.log('[UIBINDER] Distribution failed')
         fatalStartupError = true
         if(document.readyState === 'interactive' || document.readyState === 'complete'){
             showFatalStartupError()

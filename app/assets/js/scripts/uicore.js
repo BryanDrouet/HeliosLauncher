@@ -4,16 +4,50 @@
  * actions in this file should not require the usage of any internal
  * modules, excluding dependencies.
  */
-// Requirements
+
+console.log('[UICORE] Loading dependencies...')
+
+// Requirements - use absolute paths for proper resolution
 const $                              = require('jquery')
 const {ipcRenderer, shell, webFrame} = require('electron')
 const remote                         = require('@electron/remote')
-const isDev                          = require('./assets/js/isdev')
-const { LoggerUtil }                 = require('helios-core')
-const Lang                           = require('./assets/js/langloader')
+
+console.log('[UICORE] Basic requires done')
+
+// For custom modules, we need to get the right base path
+// In Electron renderer with nodeIntegration, we can use process.resourcesPath or __dirname
+let isDev
+let Lang
+const LoggerUtil                     = { getLogger: () => ({ info: console.log, error: console.error, debug: console.log }) }
+
+try {
+    isDev = require('../isdev')
+    console.log('[UICORE] isDev loaded')
+} catch(e) {
+    console.log('[UICORE] isDev not available, using fallback')
+    isDev = process.env.NODE_ENV === 'development'
+}
+
+try {
+    Lang = require('../langloader')
+    console.log('[UICORE] Lang loaded')
+} catch(e) {
+    console.log('[UICORE] Lang not available, using fallback')
+    Lang = { queryJS: (k) => k }
+}
+
+try {
+    const { LoggerUtil: LU } = require('helios-core')
+    LoggerUtil.getLogger = LU.getLogger
+    console.log('[UICORE] LoggerUtil loaded from helios-core')
+} catch(e) {
+    console.log('[UICORE] helios-core LoggerUtil not available')
+}
 
 const loggerUICore             = LoggerUtil.getLogger('UICore')
 const loggerAutoUpdater        = LoggerUtil.getLogger('AutoUpdater')
+
+console.log('[UICORE] Loggers initialized')
 
 // Log deprecation and process warnings.
 process.traceProcessWarnings = true

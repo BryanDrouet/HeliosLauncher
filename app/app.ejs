@@ -1,9 +1,29 @@
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="utf-8" http-equiv="Content-Security-Policy" content="script-src 'self' 'sha256-In6B8teKZQll5heMl9bS7CESTbGvuAt3VVV86BUQBDk='"/>
+    <meta charset="utf-8" http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'"/>
     <title><%= lang('app.title') %></title>
+    <script>
+        // Redirect console.log to main process immediately
+        if(typeof require === 'function') {
+            try {
+                const { ipcRenderer } = require('electron')
+                const origLog = console.log
+                console.log = function(...args) {
+                    origLog.apply(console, args)
+                    try {
+                        ipcRenderer.send('renderer-log', args.join(' '))
+                    } catch(e) {}
+                }
+            } catch(e) {
+                console.error('Failed to setup IPC logging:', e)
+            }
+        }
+        console.log('[APP] app.ejs loading...')
+    </script>
     <script src="./assets/js/scripts/uicore.js"></script>
+    <script>console.log('[APP] uicore.js loaded')</script>
     <script src="./assets/js/scripts/uibinder.js"></script>
+    <script>console.log('[APP] uibinder.js loaded')</script>
     <link type="text/css" rel="stylesheet" href="./assets/css/launcher.css">
     <style>
         body {

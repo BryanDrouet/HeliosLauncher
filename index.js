@@ -4,7 +4,7 @@ remoteMain.initialize()
 // Requirements
 const { app, BrowserWindow, ipcMain, Menu, shell } = require('electron')
 const autoUpdater                       = require('electron-updater').autoUpdater
-const ejse                              = require('ejs-electron')
+const ejs                               = require('ejs')
 const fs                                = require('fs')
 const isDev                             = require('./app/assets/js/isdev')
 const path                              = require('path')
@@ -104,9 +104,16 @@ ipcMain.on('launcherAction', (event, action, data) => {
     }
 })
 
+// Handle renderer logs
+ipcMain.on('renderer-log', (event, message) => {
+    console.log('[RENDERER]', message)
+})
+
 // Redirect distribution index event from preloader to renderer.
 ipcMain.on('distributionIndexDone', (event, res) => {
+    console.log('[INDEX] Received distributionIndexDone from preloader:', res)
     event.sender.send('distributionIndexDone', res)
+    console.log('[INDEX] Forwarded distributionIndexDone to renderer')
 })
 
 // Handle get-distribution-data request from preloader
@@ -127,6 +134,28 @@ ipcMain.handle('get-distribution-data', async (event) => {
     } catch (error) {
         console.error('[IPC] Error loading distribution:', error)
         return { success: false, error: error.message }
+    }
+})
+
+// Handle get-distro-data request from renderer (alternative to get-distribution-data)
+ipcMain.handle('get-distro-data', async (event) => {
+    try {
+        console.log('[IPC] Received get-distro-data request from renderer')
+        // Load distribution from distromanager
+        const { DistroAPI } = require('./app/assets/js/distromanager')
+        
+        // Set up the API with ConfigManager paths
+        DistroAPI.commonDir = ConfigManager.getCommonDirectory()
+        DistroAPI.instanceDir = ConfigManager.getInstanceDirectory()
+        
+        // Load and return the distribution
+        const distroData = await DistroAPI.getDistribution()
+        console.log('[IPC] Distribution loaded from main process')
+        
+        return distroData
+    } catch (error) {
+        console.error('[IPC] Error loading distro data:', error)
+        throw error
     }
 })
 
@@ -279,13 +308,71 @@ function createWindow() {
     })
     remoteMain.enable(win.webContents)
 
-    const data = {
-        bkid: Math.floor((Math.random() * fs.readdirSync(path.join(__dirname, 'app', 'assets', 'images', 'backgrounds')).length)),
-        lang: (str, placeHolders) => LangLoader.queryEJS(str, placeHolders)
+    try {
+        const data = {
+            bkid: Math.floor((Math.random() * fs.readdirSync(path.join(__dirname, 'app', 'assets', 'images', 'backgrounds')).length)),
+            lang: (str, placeHolders) => LangLoader.queryEJS(str, placeHolders)
+        }
+        
+        console.log('[INDEX] Rendering app.ejs template...')
+        const templatePath = path.join(__dirname, 'app', 'app.ejs')
+        ejs.renderFile(templatePath, data, {async: false}, (err, str) => {
+            if(err) {
+                console.error('[INDEX] EJS render error:', err)
+                if(win && !win.isDestroyed()) {
+                    win.loadURL('data:text/html,<h1>Render Error</h1><pre>' + err.message + '</pre>')
+                }
+            } else {
+                console.log('[INDEX] EJS render successful, loading HTML...')
+                if(win && !win.isDestroyed()) {
+                    // Save rendered HTML to file and load it
+                    const tempHtmlPath = path.join(__dirname, 'app', 'app-rendered.html')
+                    fs.writeFileSync(tempHtmlPath, str)
+                    // Verify the file was written
+                    if(fs.existsSync(tempHtmlPath)) {
+                        console.log('[INDEX] HTML file written successfully:', tempHtmlPath)
+                        const fileSize = fs.statSync(tempHtmlPath).size
+                        console.log('[INDEX] HTML file size:', fileSize, 'bytes')
+                    }
+                    const fileUrl = pathToFileURL(tempHtmlPath).toString()
+                    console.log('[INDEX] Loading from file:', fileUrl)
+                    win.loadURL(fileUrl)
+                    console.log('[INDEX] loadURL called successfully')
+                }
+            }
+        })
+    } catch(err) {
+        console.error('[INDEX] Failed to render template:', err)
+        if(win && !win.isDestroyed()) {
+            win.loadURL('data:text/html,<h1>Error Loading App</h1><pre>' + err.message + '</pre>')
+        }
     }
-    Object.entries(data).forEach(([key, val]) => ejse.data(key, val))
 
-    win.loadURL(pathToFileURL(path.join(__dirname, 'app', 'app.ejs')).toString())
+    // Open DevTools in development mode
+    if(isDev) {
+        console.log('[INDEX] Opening DevTools in dev mode')
+        setTimeout(() => {
+            if(win && !win.isDestroyed()) {
+                win.webContents.openDevTools()
+            }
+        }, 1000)
+    }
+
+    // Listen for did-finish-load event to confirm page loaded
+    win.webContents.once('did-finish-load', () => {
+        console.log('[INDEX] did-finish-load event fired - page HTML loaded')
+    })
+
+    // Listen for page content errors
+    win.webContents.on('console-message', (event) => {
+        // Deprecated API but still works
+        console.log('[CONSOLE]', event)
+    })
+    
+    // Use new API for getting detailed console messages
+    win.webContents.on('crashed', () => {
+        console.log('[RENDERER CRASH] Renderer process crashed')
+    })
 
     /*win.once('ready-to-show', () => {
         win.show()

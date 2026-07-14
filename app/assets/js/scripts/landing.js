@@ -27,9 +27,15 @@ const {
     extractJdk
 }                             = require('helios-core/java')
 
-// Internal Requirements
-const DiscordWrapper          = require('./assets/js/discordwrapper')
-const ProcessBuilder          = require('./assets/js/processbuilder')
+// Internal Requirements - wrap in try-catch for renderer context
+let DiscordWrapper
+let ProcessBuilder
+try {
+    DiscordWrapper          = require('../discordwrapper')
+    ProcessBuilder          = require('../processbuilder')
+} catch (err) {
+    console.error('[LANDING] Error loading internal modules:', err.message)
+}
 
 // Launch Elements
 const launch_content          = document.getElementById('launch_content')
@@ -154,7 +160,15 @@ function updateSelectedAccount(authUser){
     }
     user_text.innerHTML = username
 }
-updateSelectedAccount(ConfigManager.getSelectedAccount())
+
+// Safely update selected account, handling renderer context where ConfigManager might not be fully initialized
+try {
+    if (ConfigManager && ConfigManager.getSelectedAccount) {
+        updateSelectedAccount(ConfigManager.getSelectedAccount())
+    }
+} catch (err) {
+    console.error('[LANDING] Error loading selected account:', err.message)
+}
 
 // Bind selected server
 function updateSelectedServer(serv){

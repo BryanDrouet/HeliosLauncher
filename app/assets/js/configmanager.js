@@ -2,7 +2,13 @@ const fs   = require('fs-extra')
 const { LoggerUtil } = require('helios-core')
 const os   = require('os')
 const path = require('path')
-const { app } = require('electron')
+
+let app
+try {
+    app = require('electron').app
+} catch(e) {
+    // app not available in renderer context, will use fallback
+}
 
 const logger = LoggerUtil.getLogger('ConfigManager')
 
@@ -10,7 +16,20 @@ const sysRoot = process.env.APPDATA || (process.platform == 'darwin' ? process.e
 
 const dataPath = path.join(sysRoot, '.helioslauncher')
 
-const launcherDir = app.getPath('userData')
+// Lazy initialization of launcherDir - only compute when first used
+let launcherDir = null
+
+function getLauncherDir() {
+    if (!launcherDir) {
+        if (app) {
+            launcherDir = app.getPath('userData')
+        } else {
+            // Fallback for renderer context
+            launcherDir = dataPath
+        }
+    }
+    return launcherDir
+}
 
 /**
  * Retrieve the absolute path of the launcher directory.
@@ -18,7 +37,7 @@ const launcherDir = app.getPath('userData')
  * @returns {string} The absolute path of the launcher directory.
  */
 exports.getLauncherDirectory = function(){
-    return launcherDir
+    return getLauncherDir()
 }
 
 /**
