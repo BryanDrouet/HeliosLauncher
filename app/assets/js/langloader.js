@@ -27,16 +27,28 @@ function detectSystemLocale() {
 
 exports.loadLanguage = function(id){
     currentLangId = id
-    lang = merge(lang || {}, toml.parse(fs.readFileSync(path.join(__dirname, '..', 'lang', `${id}.toml`))) || {})
+    try {
+        const langPath = path.join(__dirname, '..', 'lang', `${id}.toml`)
+        if(fs.existsSync(langPath)) {
+            lang = merge(lang || {}, toml.parse(fs.readFileSync(langPath, 'utf8')) || {})
+        }
+    } catch(e) {
+        console.error(`Failed to load language ${id}:`, e)
+    }
 }
 
 exports.query = function(id, placeHolders){
+    if(!lang) return ''
     let query = id.split('.')
     let res = lang
     for(let q of query){
-        res = res[q]
+        if(res && typeof res === 'object') {
+            res = res[q]
+        } else {
+            return ''
+        }
     }
-    let text = res === lang ? '' : res
+    let text = res === lang ? '' : res || ''
     if (placeHolders) {
         Object.entries(placeHolders).forEach(([key, value]) => {
             text = text.replace(`{${key}}`, value)
