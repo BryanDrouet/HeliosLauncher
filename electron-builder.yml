@@ -38,8 +38,6 @@ nsis:
   createStartMenuShortcut: true
   runAfterFinish: true
   uninstallDisplayName: 'MicroVision Launcher'
-  installerSidebar: false
-  installerHeader: false
 
 # macOS Configuration
 mac:

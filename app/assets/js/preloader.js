@@ -2,6 +2,7 @@ const {ipcRenderer}  = require('electron')
 const fs             = require('fs-extra')
 const os             = require('os')
 const path           = require('path')
+const { execSync }   = require('child_process')
 
 const ConfigManager  = require('./configmanager')
 const { DistroAPI }  = require('./distromanager')
@@ -16,6 +17,22 @@ logger.info('Loading..')
 
 // Load ConfigManager
 ConfigManager.load()
+
+// Check if this is the first launch and try to get language from installer
+if (ConfigManager.isFirstLaunch()) {
+    try {
+        const regKey = 'HKCU\\Software\\MicroVision\\Launcher'
+        const result = execSync(`reg query "${regKey}" /v InstallLanguage`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] })
+        const match = result.match(/InstallLanguage\s+REG_SZ\s+(\S+)/)
+        if (match && match[1]) {
+            ConfigManager.setLanguage(match[1])
+            ConfigManager.save()
+            logger.info(`Set language from installer: ${match[1]}`)
+        }
+    } catch (e) {
+        logger.info('Could not read installer language from registry:', e.message)
+    }
+}
 
 // Yuck!
 // TODO Fix this

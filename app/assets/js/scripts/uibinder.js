@@ -24,7 +24,7 @@ const VIEWS = {
 }
 
 // The currently shown view container.
-let currentView
+let currentView = null
 
 /**
  * Switch launcher views.
@@ -39,6 +39,15 @@ let currentView
  * fades in.
  */
 function switchView(current, next, currentFadeTime = 500, nextFadeTime = 500, onCurrentFade = () => {}, onNextFade = () => {}){
+    // Prevent switching if current view is null or same as next view
+    if (current === null || current === next) {
+        currentView = next
+        $(`${next}`).fadeIn(nextFadeTime, async () => {
+            await onNextFade()
+        })
+        return
+    }
+    
     currentView = next
     $(`${current}`).fadeOut(currentFadeTime, async () => {
         await onCurrentFade()

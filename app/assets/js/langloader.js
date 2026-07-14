@@ -9,9 +9,16 @@ let currentLangId = 'en_US'
 
 // Supported languages
 const SUPPORTED_LANGUAGES = {
+    'en_US': 'English',
     'fr_FR': 'Français',
     'es_ES': 'Español',
-    'en_US': 'English'
+    'de_DE': 'Deutsch',
+    'it_IT': 'Italiano',
+    'pt_BR': 'Português',
+    'pl_PL': 'Polski',
+    'ru_RU': 'Русский',
+    'ja_JP': '日本語',
+    'zh_CN': '简体中文'
 }
 
 // Detect system locale
