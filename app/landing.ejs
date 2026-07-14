@@ -99,8 +99,8 @@
                         <span class="bot_label" id="landingPlayerLabel"><%- lang('landing.serverStatus') %></span>
                         <span id="player_count"><%- lang('landing.serverStatusPlaceholder') %></span>
                     </div>
-                    <div class="bot_divider"></div>
-                    <div id="mojangStatusWrapper">
+                    <div class="bot_divider" style="display: none;"></div>
+                    <div id="mojangStatusWrapper" style="display: none;">
                         <span class="bot_label"><%- lang('landing.mojangStatus') %></span>
                         <span id="mojang_status_icon">&#8226;</span>
                         <div id="mojangStatusTooltip">
@@ -124,7 +124,7 @@
         <div id="center">
             <div class="bot_wrapper">
                 <div id="content">
-                    <button id="newsButton">
+                    <button id="newsButton" style="display: none;">
                         <!--<img src="assets/images/icons/arrow.svg" id="newsButtonSVG"/>-->
                         <div id="newsButtonAlert" style="display: none;"></div>
                         <svg id="newsButtonSVG" viewBox="0 0 24.87 13.97">

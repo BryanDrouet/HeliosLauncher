@@ -266,13 +266,29 @@ const refreshServerStatus = async (fade = false) => {
     
 }
 
-refreshMojangStatuses()
+// Mojang status is hidden for MicroVision - only the Minecraft server status is shown.
+// refreshMojangStatuses()
 // Server Status is refreshed in uibinder.js on distributionIndexDone.
 
 // Refresh statuses every hour. The status page itself refreshes every day so...
-let mojangStatusListener = setInterval(() => refreshMojangStatuses(true), 60*60*1000)
+// let mojangStatusListener = setInterval(() => refreshMojangStatuses(true), 60*60*1000)
 // Set refresh rate to once every 5 minutes.
 let serverStatusListener = setInterval(() => refreshServerStatus(true), 300000)
+
+// Hide social media icons that are not configured (href ending with '#').
+const hideUnconfiguredSocialIcons = () => {
+    document.querySelectorAll('#externalMedia .mediaContainer').forEach((container) => {
+        const link = container.querySelector('a.mediaURL')
+        if(link != null && link.getAttribute('href').trim().endsWith('#')){
+            container.style.display = 'none'
+        }
+    })
+}
+if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', hideUnconfiguredSocialIcons)
+} else {
+    hideUnconfiguredSocialIcons()
+}
 
 /**
  * Shows an error overlay, toggles off the launch area.
