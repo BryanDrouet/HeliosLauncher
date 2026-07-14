@@ -31,9 +31,12 @@ writeLog('Requesting distribution from main process...')
 // Request the distribution from the main process
 ipcRenderer.invoke('get-distribution-data').then((data) => {
     writeLog('Received distribution data')
+    writeLog('About to send distributionIndexDone...')
     // Store for later use in uibinder or other scripts
     window.distributionData = data
+    // Send signal that distribution is ready - this will trigger uibinder.js to load the UI
     ipcRenderer.send('distributionIndexDone', true)
+    writeLog('distributionIndexDone signal sent')
 }).catch((err) => {
     writeLog('Error getting distribution: ' + err)
     ipcRenderer.send('distributionIndexDone', false)
