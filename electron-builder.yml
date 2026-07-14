@@ -26,6 +26,9 @@ nsis:
   allowElevation: true
   allowToChangeInstallationDirectory: true
   shortcutName: 'MicroVision Launcher'
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  runAfterFinish: false
 
 # macOS Configuration
 mac:
