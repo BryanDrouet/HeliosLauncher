@@ -27,7 +27,7 @@
     <link type="text/css" rel="stylesheet" href="./assets/css/launcher.css">
     <style>
         body {
-            /*background: url('assets/images/backgrounds/6.jpg') no-repeat center center fixed;*/
+            /*background: url('assets/images/backgrounds/0.jpg') no-repeat center center fixed;*/
             transition: background-image 1s ease;
             background-image: url('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD//gA+Q1JFQVRPUjogZ2QtanBlZyB2MS4wICh1c2luZyBJSkcgSlBFRyB2ODApLCBkZWZhdWx0IHF1YWxpdHkK/9sAQwAIBgYHBgUIBwcHCQkICgwUDQwLCwwZEhMPFB0aHx4dGhwcICQuJyAiLCMcHCg3KSwwMTQ0NB8nOT04MjwuMzQy/9sAQwEJCQkMCwwYDQ0YMiEcITIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy/8AAEQgAPwBwAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/aAAwDAQACEQMRAD8A8VooopDCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/9k=');
             background-size: cover;
@@ -46,7 +46,7 @@
         }
     </style>
 </head>
-<body bkid="6">
+<body bkid="0">
     <div id="frameBar">
     <div id="frameResizableTop" class="frameDragPadder"></div>
     <div id="frameMain">
@@ -499,11 +499,13 @@
                     <span class="settingsFieldDesc">Select the launcher interface language.</span>
                 </div>
                 <div class="settingsFieldRight">
-                    <select id="languageSelect" style="width: 200px; padding: 5px; font-size: 14px;">
-                        <option value="en_US">English</option>
-                        <option value="fr_FR">Français</option>
-                        <option value="es_ES">Español</option>
-                    </select>
+                    <div class="settingsSelectWrapper">
+                        <select id="languageSelect" class="settingsSelect">
+                            <option value="en_US">English</option>
+                            <option value="fr_FR">Français</option>
+                            <option value="es_ES">Español</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="settingsFileSelContainer">
@@ -682,7 +684,7 @@
                             </a>
                         </div>
                         <div class="mediaContainer">
-                            <a href="#" class="mediaURL" id="youtubeURL">
+                            <a href="https://www.youtube.com/@bryan_drouet2" class="mediaURL" id="youtubeURL">
                                 <svg id="youtubeSVG" class="mediaSVG" viewBox="35.34 34.3575 70.68 68.71500">
                                     <g>
                                         <path d="M84.8,69.52,65.88,79.76V59.27Zm23.65.59c0-5.14-.79-17.63-3.94-20.57S99,45.86,73.37,45.86s-28,.73-31.14,3.68S38.29,65,38.29,70.11s.79,17.63,3.94,20.57,5.52,3.68,31.14,3.68,28-.74,31.14-3.68,3.94-15.42,3.94-20.57"/>

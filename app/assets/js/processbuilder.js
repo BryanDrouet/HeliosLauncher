@@ -40,12 +40,66 @@ class ProcessBuilder {
         this.usingFabricLoader = false
         this.llPath = null
     }
+
+    /**
+     * Ensure the MicroVision server is present in the instance's servers.dat so
+     * it appears pre-added in the Minecraft multiplayer list. Writes an
+     * uncompressed NBT servers.dat if one doesn't already exist, otherwise
+     * leaves the user's existing server list untouched.
+     */
+    ensureServerInList(){
+        try {
+            const serversDatPath = path.join(this.gameDir, 'servers.dat')
+            if(fs.existsSync(serversDatPath)){
+                // Preserve any existing server list the user may have.
+                return
+            }
+
+            const serverName = 'MicroVision 2026'
+            const serverIp = this.server.rawServer.address
+
+            // --- Minimal uncompressed NBT writer for servers.dat ---
+            const writeString = (str) => {
+                const strBuf = Buffer.from(str, 'utf8')
+                const lenBuf = Buffer.alloc(2)
+                lenBuf.writeUInt16BE(strBuf.length, 0)
+                return Buffer.concat([lenBuf, strBuf])
+            }
+            const namedString = (name, value) => Buffer.concat([
+                Buffer.from([0x08]), // TAG_String
+                writeString(name),
+                writeString(value)
+            ])
+
+            const listLen = Buffer.alloc(4)
+            listLen.writeInt32BE(1, 0)
+
+            const nbt = Buffer.concat([
+                Buffer.from([0x0A]),          // Root TAG_Compound
+                Buffer.from([0x00, 0x00]),    // Root name length 0
+                Buffer.from([0x09]),          // TAG_List "servers"
+                writeString('servers'),
+                Buffer.from([0x0A]),          // List element type: TAG_Compound
+                listLen,                      // List length: 1
+                namedString('name', serverName),
+                namedString('ip', serverIp),
+                Buffer.from([0x00]),          // TAG_End (close server compound)
+                Buffer.from([0x00])           // TAG_End (close root compound)
+            ])
+
+            fs.writeFileSync(serversDatPath, nbt)
+            logger.info(`Wrote default servers.dat with server "${serverName}" (${serverIp}).`)
+        } catch (err) {
+            logger.warn('Failed to write default servers.dat:', err.message)
+        }
+    }
     
     /**
      * Convienence method to run the functions typically used to build a process.
      */
     build(){
         fs.ensureDirSync(this.gameDir)
+        this.ensureServerInList()
         const tempNativePath = path.join(os.tmpdir(), ConfigManager.getTempNativeFolder(), crypto.pseudoRandomBytes(16).toString('hex'))
         process.throwDeprecation = true
         this.setupLiteLoader()

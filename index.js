@@ -95,7 +95,10 @@ ipcMain.on('launcherAction', (event, action, data) => {
     switch(action){
         case 'languageChange':
             console.log('Changing language to:', data)
-            LangLoader.changeLanguage(data)
+            LangLoader.setupLanguage(data)
+            // Re-render the UI with the new language so the change is applied
+            // immediately without requiring the user to restart the launcher.
+            renderAndLoadApp()
             event.sender.send('languageChanged', data)
             break
         default:
@@ -292,28 +295,18 @@ ipcMain.on(MSFT_OPCODE.OPEN_LOGOUT, (ipcEvent, uuid, isLastAccount) => {
 // be closed automatically when the JavaScript object is garbage collected.
 let win
 
-function createWindow() {
-
-    win = new BrowserWindow({
-        width: 980,
-        height: 552,
-        icon: getPlatformIcon('SealCircle'),
-        frame: false,
-        webPreferences: {
-            preload: path.join(__dirname, 'app', 'assets', 'js', 'preloader.js'),
-            nodeIntegration: true,
-            contextIsolation: false
-        },
-        backgroundColor: '#171614'
-    })
-    remoteMain.enable(win.webContents)
-
+// Render the app.ejs template with the current language and load it into the
+// window. Can be re-invoked (e.g. after a language change) to refresh the UI.
+function renderAndLoadApp() {
+    if(!win || win.isDestroyed()) {
+        return
+    }
     try {
         const data = {
             bkid: Math.floor((Math.random() * fs.readdirSync(path.join(__dirname, 'app', 'assets', 'images', 'backgrounds')).length)),
             lang: (str, placeHolders) => LangLoader.queryEJS(str, placeHolders)
         }
-        
+
         console.log('[INDEX] Rendering app.ejs template...')
         const templatePath = path.join(__dirname, 'app', 'app.ejs')
         ejs.renderFile(templatePath, data, {async: false}, (err, str) => {
@@ -347,6 +340,25 @@ function createWindow() {
             win.loadURL('data:text/html,<h1>Error Loading App</h1><pre>' + err.message + '</pre>')
         }
     }
+}
+
+function createWindow() {
+
+    win = new BrowserWindow({
+        width: 980,
+        height: 552,
+        icon: getPlatformIcon('SealCircle'),
+        frame: false,
+        webPreferences: {
+            preload: path.join(__dirname, 'app', 'assets', 'js', 'preloader.js'),
+            nodeIntegration: true,
+            contextIsolation: false
+        },
+        backgroundColor: '#171614'
+    })
+    remoteMain.enable(win.webContents)
+
+    renderAndLoadApp()
 
     // Open DevTools in development mode
     if(isDev) {

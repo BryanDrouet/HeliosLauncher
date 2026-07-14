@@ -5,8 +5,8 @@ const semver = require('semver')
 let DropinModUtil
 let MSFT_OPCODE, MSFT_REPLY_TYPE, MSFT_ERROR
 try {
-    DropinModUtil  = require('../dropinmodutil')
-    const ipcconstants = require('../ipcconstants')
+    DropinModUtil  = require('./assets/js/dropinmodutil')
+    const ipcconstants = require('./assets/js/ipcconstants')
     MSFT_OPCODE = ipcconstants.MSFT_OPCODE
     MSFT_REPLY_TYPE = ipcconstants.MSFT_REPLY_TYPE
     MSFT_ERROR = ipcconstants.MSFT_ERROR

@@ -31,8 +31,8 @@ const {
 let DiscordWrapper
 let ProcessBuilder
 try {
-    DiscordWrapper          = require('../discordwrapper')
-    ProcessBuilder          = require('../processbuilder')
+    DiscordWrapper          = require('./assets/js/discordwrapper')
+    ProcessBuilder          = require('./assets/js/processbuilder')
 } catch (err) {
     console.error('[LANDING] Error loading internal modules:', err.message)
 }
@@ -291,12 +291,21 @@ let serverStatusListener = setInterval(() => refreshServerStatus(true), 300000)
 
 // Hide social media icons that are not configured (href ending with '#').
 const hideUnconfiguredSocialIcons = () => {
+    let visibleCount = 0
     document.querySelectorAll('#externalMedia .mediaContainer').forEach((container) => {
         const link = container.querySelector('a.mediaURL')
         if(link != null && link.getAttribute('href').trim().endsWith('#')){
             container.style.display = 'none'
+        } else {
+            visibleCount++
         }
     })
+    // If no external media icons are visible, hide the divider separating the
+    // internal (settings) media from the external media links.
+    const divider = document.querySelector('#mediaContent .mediaDivider')
+    if(divider != null){
+        divider.style.display = visibleCount > 0 ? '' : 'none'
+    }
 }
 if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', hideUnconfiguredSocialIcons)
@@ -994,10 +1003,19 @@ async function loadNews(){
         return null
     }
 
+    // Guard against malformed/placeholder RSS URLs so news loading doesn't throw.
+    let newsFeedOrigin
+    try {
+        newsFeedOrigin = new URL(distroData.rawDistribution.rss).origin + '/'
+    } catch (err) {
+        loggerLanding.debug('Invalid RSS feed URL, skipping news.')
+        return null
+    }
+
     const promise = new Promise((resolve, reject) => {
         
         const newsFeed = distroData.rawDistribution.rss
-        const newsHost = new URL(newsFeed).origin + '/'
+        const newsHost = newsFeedOrigin
         $.ajax({
             url: newsFeed,
             success: (data) => {

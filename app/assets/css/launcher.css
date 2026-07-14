@@ -1336,6 +1336,57 @@ body, button {
     background: rgba(255, 255, 255, 0.25);
 }
 
+/* Custom Styled Select (e.g. Language Selector) - shares the same look as
+   the custom .settingsSelectSelected dropdowns for a consistent style. */
+.settingsSelectWrapper {
+    position: relative;
+    display: inline-block;
+    min-width: 200px;
+}
+/* Arrow matching the .settingsSelectSelected triangle style. */
+.settingsSelectWrapper::after {
+    position: absolute;
+    content: "";
+    top: calc(50% - 3px);
+    right: 10px;
+    width: 0;
+    height: 0;
+    border: 6px solid transparent;
+    border-color: rgba(126, 126, 126, 0.57) transparent transparent transparent;
+    pointer-events: none;
+    transition: border-color 0.25s ease;
+}
+.settingsSelectWrapper:hover::after {
+    border-color: #ffffff transparent transparent transparent;
+}
+.settingsSelect {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgba(126, 126, 126, 0.57);
+    font-size: 14px;
+    padding: 6px 32px 6px 16px;
+    background: rgba(0, 0, 0, 0.25);
+    color: #ffffff;
+    cursor: pointer;
+    outline: none;
+    transition: 0.25s ease;
+}
+.settingsSelect:hover,
+.settingsSelect:focus {
+    background: rgba(54, 54, 54, 0.25);
+    text-shadow: 0px 0px 20px white;
+}
+/* Options content - matches the .settingsSelectOptions div styling. */
+.settingsSelect option {
+    background: rgba(0, 0, 0, 0.95);
+    color: #ffffff;
+    font-size: 12px;
+}
+
 /* Toggle Switch */
 .toggleSwitch {
     position: relative;

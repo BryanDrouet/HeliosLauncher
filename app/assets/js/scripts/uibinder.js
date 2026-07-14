@@ -9,6 +9,8 @@ console.log('[UIBINDER] Script loading...')
 let AuthManager
 let ConfigManager
 let DistroAPI
+let path
+let Type
 
 try {
     // Don't redeclare ipcRenderer - it should come from uicore or be globally available
@@ -17,19 +19,19 @@ try {
         window.ipcRenderer = ipcrend
     }
     
-    const path          = require('path')
+    path = require('path')
     console.log('[UIBINDER] path loaded')
     
-    const { Type }      = require('helios-distribution-types')
+    Type = require('helios-distribution-types').Type
     console.log('[UIBINDER] helios-distribution-types loaded')
     
-    AuthManager   = require('../authmanager')
+    AuthManager   = require('./assets/js/authmanager')
     console.log('[UIBINDER] AuthManager loaded')
     
-    ConfigManager = require('../configmanager')
+    ConfigManager = require('./assets/js/configmanager')
     console.log('[UIBINDER] ConfigManager loaded')
     
-    const distromanager = require('../distromanager')
+    const distromanager = require('./assets/js/distromanager')
     DistroAPI = distromanager.DistroAPI
     console.log('[UIBINDER] DistroAPI loaded')
 } catch (err) {
@@ -103,6 +105,13 @@ async function showMainUI(data){
 
     await prepareSettings(true)
     updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
+    // Update the landing account UI (username + avatar) now that ConfigManager
+    // is loaded. The module-level call in landing.js runs before config load.
+    try {
+        updateSelectedAccount(ConfigManager.getSelectedAccount())
+    } catch (err) {
+        console.error('[UIBINDER] Error updating selected account:', err.message)
+    }
     refreshServerStatus()
     setTimeout(() => {
         document.getElementById('frameBar').style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
@@ -462,8 +471,7 @@ document.addEventListener('readystatechange', async () => {
         if(rscShouldLoad){
             rscShouldLoad = false
             if(!fatalStartupError){
-                const data = await DistroAPI.getDistribution()
-                await showMainUI(data)
+                await initMainUI()
             } else {
                 showFatalStartupError()
             }
@@ -476,39 +484,12 @@ document.addEventListener('readystatechange', async () => {
 ipcRenderer.on('distributionIndexDone', async (event, res) => {
     console.log('[UIBINDER] Received distributionIndexDone event:', res)
     if(res) {
-        try {
-            let data
-            if (DistroAPI) {
-                console.log('[UIBINDER] Using local DistroAPI')
-                console.log('[UIBINDER] About to call DistroAPI.getDistribution()...')
-                data = await DistroAPI.getDistribution()
-                console.log('[UIBINDER] DistroAPI.getDistribution() returned')
-            } else {
-                console.log('[UIBINDER] DistroAPI not available in renderer, requesting from main...')
-                data = await ipcRenderer.invoke('get-distro-data')
-                console.log('[UIBINDER] Received distro data from main process')
-            }
-            
-            if (ConfigManager) {
-                syncModConfigurations(data)
-                ensureJavaSettings(data)
-            } else {
-                console.log('[UIBINDER] ConfigManager not available, skipping sync/java settings')
-            }
-            
-            if(document.readyState === 'interactive' || document.readyState === 'complete'){
-                console.log('[UIBINDER] Document ready, showing main UI')
-                await showMainUI(data)
-            } else {
-                console.log('[UIBINDER] Document not ready, setting rscShouldLoad')
-                rscShouldLoad = true
-            }
-        } catch(err) {
-            console.error('[UIBINDER] Error in distributionIndexDone:', err)
-            fatalStartupError = true
-            if(document.readyState === 'interactive' || document.readyState === 'complete'){
-                showFatalStartupError()
-            }
+        if(document.readyState === 'interactive' || document.readyState === 'complete'){
+            console.log('[UIBINDER] Document ready, showing main UI')
+            await initMainUI()
+        } else {
+            console.log('[UIBINDER] Document not ready, setting rscShouldLoad')
+            rscShouldLoad = true
         }
     } else {
         console.log('[UIBINDER] Distribution failed')
@@ -520,6 +501,79 @@ ipcRenderer.on('distributionIndexDone', async (event, res) => {
         }
     }
 })
+
+// Guard to ensure the main UI is only initialized once, regardless of whether
+// it's triggered by the distributionIndexDone IPC event or the proactive
+// startup fallback below.
+let mainUIInitialized = false
+
+async function initMainUI() {
+    if (mainUIInitialized) {
+        return
+    }
+    mainUIInitialized = true
+    console.log('[UIBINDER] initMainUI starting...')
+    try {
+        // Ensure the renderer's ConfigManager instance is loaded (the main
+        // process has its own separate instance).
+        if (ConfigManager && typeof ConfigManager.isLoaded === 'function' && !ConfigManager.isLoaded()) {
+            try {
+                ConfigManager.load()
+                console.log('[UIBINDER] ConfigManager loaded in renderer')
+            } catch (cfgErr) {
+                console.error('[UIBINDER] Error loading ConfigManager:', cfgErr.message)
+            }
+        }
+
+        let data
+        if (DistroAPI) {
+            data = await DistroAPI.getDistribution()
+        } else {
+            data = await ipcRenderer.invoke('get-distro-data')
+        }
+
+        if (ConfigManager) {
+            try {
+                // Ensure a valid server is selected. On first launch (or if the
+                // previously selected server no longer exists in the distro),
+                // default to the distribution's main server.
+                const selectedId = ConfigManager.getSelectedServer()
+                if (selectedId == null || data.getServerById(selectedId) == null) {
+                    const mainServer = data.getMainServer()
+                    if (mainServer != null) {
+                        ConfigManager.setSelectedServer(mainServer.rawServer.id)
+                        ConfigManager.save()
+                        console.log('[UIBINDER] Selected default server:', mainServer.rawServer.id)
+                    }
+                }
+
+                syncModConfigurations(data)
+                ensureJavaSettings(data)
+            } catch (syncErr) {
+                console.error('[UIBINDER] Error syncing configs:', syncErr.message)
+            }
+        }
+
+        await showMainUI(data)
+        console.log('[UIBINDER] Main UI shown successfully')
+    } catch (err) {
+        console.error('[UIBINDER] Error in initMainUI:', err)
+        fatalStartupError = true
+        showFatalStartupError()
+    }
+}
+
+// The distributionIndexDone IPC event may be dispatched by the main process
+// before this listener is registered (race condition). To guarantee the UI
+// loads, proactively initialize once the DOM is ready.
+function startupInitFallback() {
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        initMainUI()
+    } else {
+        document.addEventListener('DOMContentLoaded', () => initMainUI(), { once: true })
+    }
+}
+startupInitFallback()
 
 // Util for development
 async function devModeToggle() {

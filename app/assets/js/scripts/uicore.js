@@ -21,7 +21,7 @@ let Lang
 const LoggerUtil                     = { getLogger: () => ({ info: console.log, error: console.error, debug: console.log }) }
 
 try {
-    isDev = require('../isdev')
+    isDev = require('./assets/js/isdev')
     console.log('[UICORE] isDev loaded')
 } catch(e) {
     console.log('[UICORE] isDev not available, using fallback')
@@ -29,7 +29,7 @@ try {
 }
 
 try {
-    Lang = require('../langloader')
+    Lang = require('./assets/js/langloader')
     console.log('[UICORE] Lang loaded')
 } catch(e) {
     console.log('[UICORE] Lang not available, using fallback')
