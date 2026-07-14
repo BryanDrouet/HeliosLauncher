@@ -100,6 +100,15 @@ if(!isDev){
  * 
  * @param {boolean} val The new allow prerelease value.
  */
+/**
+ * Change the launcher language at runtime.
+ * 
+ * @param {string} lang The language code (e.g., 'en_US', 'fr_FR', 'es_ES').
+ */
+function changeLanguage(lang){
+    ipcRenderer.send('launcherAction', 'languageChange', lang)
+}
+
 function changeAllowPrerelease(val){
     ipcRenderer.send('autoUpdateAction', 'allowPrereleaseChange', val)
 }

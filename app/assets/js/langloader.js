@@ -63,13 +63,28 @@ exports.getAvailableLanguages = function(){
     return SUPPORTED_LANGUAGES
 }
 
-exports.setupLanguage = function(){
-    // Detect system language or use default
-    const systemLang = detectSystemLocale()
+exports.setupLanguage = function(configuredLanguage){
+    // Use configured language if provided, otherwise detect system language
+    let languageToLoad = configuredLanguage || detectSystemLocale()
     
-    // Load Language Files - start with system language
-    exports.loadLanguage(systemLang)
+    // Ensure the language is supported, fallback to English
+    if (!SUPPORTED_LANGUAGES[languageToLoad]) {
+        languageToLoad = 'en_US'
+    }
+    
+    // Load Language Files - start with configured or system language
+    exports.loadLanguage(languageToLoad)
     
     // Load Custom Language File for Launcher Customizer
     exports.loadLanguage('_custom')
+}
+
+/**
+ * Change the current language at runtime
+ * @param {string} languageId The language code to switch to
+ */
+exports.changeLanguage = function(languageId){
+    if (SUPPORTED_LANGUAGES[languageId]) {
+        exports.loadLanguage(languageId)
+    }
 }

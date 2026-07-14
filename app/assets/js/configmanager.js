@@ -86,6 +86,7 @@ const DEFAULT_CONFIG = {
         },
         launcher: {
             allowPrerelease: false,
+            language: 'en_US',
             dataDirectory: dataPath
         }
     },
@@ -790,4 +791,23 @@ exports.getAllowPrerelease = function(def = false){
  */
 exports.setAllowPrerelease = function(allowPrerelease){
     config.settings.launcher.allowPrerelease = allowPrerelease
+}
+
+/**
+ * Get the currently selected launcher language.
+ * 
+ * @param {boolean} def Optional. If true, the default value will be returned.
+ * @returns {string} The language code (e.g., 'en_US', 'fr_FR', 'es_ES').
+ */
+exports.getLanguage = function(def = false){
+    return !def ? config.settings.launcher.language : DEFAULT_CONFIG.settings.launcher.language
+}
+
+/**
+ * Set the launcher language.
+ * 
+ * @param {string} language The language code to set (e.g., 'en_US', 'fr_FR', 'es_ES').
+ */
+exports.setLanguage = function(language){
+    config.settings.launcher.language = language
 }

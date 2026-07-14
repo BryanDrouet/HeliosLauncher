@@ -1561,6 +1561,28 @@ function prepareUpdateTab(data = null){
  */
 
 /**
+ * Initialize the language selector.
+ */
+function initLanguageSelector(){
+    const languageSelect = document.getElementById('languageSelect')
+    if(languageSelect){
+        // Set the select to the current language
+        const currentLang = ConfigManager.getLanguage()
+        languageSelect.value = currentLang
+        
+        languageSelect.addEventListener('change', (e) => {
+            const selectedLang = e.target.value
+            console.log('Language changed to:', selectedLang)
+            // Save the language to config
+            ConfigManager.setLanguage(selectedLang)
+            ConfigManager.save()
+            // Change the UI language
+            changeLanguage(selectedLang)
+        })
+    }
+}
+
+/**
   * Prepare the entire settings UI.
   * 
   * @param {boolean} first Whether or not it is the first load.
@@ -1569,6 +1591,7 @@ async function prepareSettings(first = false) {
     if(first){
         setupSettingsTabs()
         initSettingsValidators()
+        initLanguageSelector()
         prepareUpdateTab()
     } else {
         await prepareModsTab()

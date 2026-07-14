@@ -12,9 +12,11 @@ const semver                            = require('semver')
 const { pathToFileURL }                 = require('url')
 const { AZURE_CLIENT_ID, MSFT_OPCODE, MSFT_REPLY_TYPE, MSFT_ERROR, SHELL_OPCODE } = require('./app/assets/js/ipcconstants')
 const LangLoader                        = require('./app/assets/js/langloader')
+const ConfigManager                     = require('./app/assets/js/configmanager')
 
-// Setup Lang
-LangLoader.setupLanguage()
+// Setup Lang - load configured language
+const configuredLang = ConfigManager.getLanguage && ConfigManager.getLanguage() || null
+LangLoader.setupLanguage(configuredLang)
 
 // Setup auto updater.
 function initAutoUpdater(event, data) {
@@ -84,6 +86,21 @@ ipcMain.on('autoUpdateAction', (event, arg, data) => {
             break
     }
 })
+
+// Handle launcher actions (language change, etc.)
+ipcMain.on('launcherAction', (event, action, data) => {
+    switch(action){
+        case 'languageChange':
+            console.log('Changing language to:', data)
+            LangLoader.changeLanguage(data)
+            event.sender.send('languageChanged', data)
+            break
+        default:
+            console.log('Unknown launcher action', action)
+            break
+    }
+})
+
 // Redirect distribution index event from preloader to renderer.
 ipcMain.on('distributionIndexDone', (event, res) => {
     event.sender.send('distributionIndexDone', res)
