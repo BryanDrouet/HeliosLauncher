@@ -4,11 +4,19 @@ artifactName: '${productName}-setup-${version}.${ext}'
 
 copyright: 'Copyright © 2018-2026 Daniel Scalzi'
 
-asar: true
+asar: false
 compression: 'maximum'
 
+# Include only what's needed, exclude the duplicated app folder
 files:
-  - '!{dist,.gitignore,.vscode,docs,dev-app-update.yml,.nvmrc,eslint.config.mjs}'
+  - '!dist'
+  - '!docs'
+  - '!.vscode'
+  - '!.gitignore'
+  - '!dev-app-update.yml'
+  - '!.nvmrc'
+  - '!eslint.config.mjs'
+  - '!build'
 
 extraResources:
   - 'libraries'
