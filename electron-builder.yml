@@ -37,11 +37,6 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   runAfterFinish: false
-  installerLanguages:
-    - English
-    - French
-    - Spanish
-  displayLanguageSelector: true
 
 # macOS Configuration
 mac:
